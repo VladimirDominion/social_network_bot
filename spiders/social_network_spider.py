@@ -3,7 +3,6 @@ from tasks.posts import create_posts
 
 class SocialNetworkSpider:
     users = []
-    posts = []
     likes = []
 
     def __init__(
@@ -20,3 +19,7 @@ class SocialNetworkSpider:
     async def create_posts(self):
         for user in self.users:
             await create_posts(user=user)
+
+    async def run(self):
+        await create_posts()
+        await create_posts()
