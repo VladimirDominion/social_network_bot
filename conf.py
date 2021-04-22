@@ -1,0 +1,7 @@
+NUMBER_OF_USERS = 10
+
+MAX_POST_PER_USER = 5
+
+MAX_LIKES_PER_USER = 10
+
+BASE_URL = 'http://localhost:8000'
