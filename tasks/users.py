@@ -2,11 +2,9 @@ import asyncio
 from typing import List
 
 import aiohttp
+from conf import BASE_URL
 from faker import Faker
 from pydantic import BaseModel
-
-from conf import BASE_URL
-
 
 fake = Faker()
 
@@ -54,6 +52,3 @@ async def create_users(*, number_of_users: int) -> List[User]:
         created_user = await task
         created_users_list.append(created_user)
     return created_users_list
-
-
-

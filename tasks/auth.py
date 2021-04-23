@@ -1,6 +1,6 @@
 import aiohttp
-from tasks.users import User
 from conf import BASE_URL
+from tasks.users import User
 
 
 async def get_jwt_token(*, user: User) -> dict:

@@ -1,5 +1,6 @@
-import pytest
 import asyncio
+
+import pytest
 
 from ..tasks.users import _create_fake_user
 
@@ -17,8 +18,8 @@ def number_of_users():
 @pytest.fixture
 def fake_tokens():
     return {
-      "access":"XXXXXXXXXXXX",
-      "refresh":"XXXXXXXXXXXX"
+        "access": "XXXXXXXXXXXX",
+        "refresh": "XXXXXXXXXXXX"
     }
 
 
@@ -28,11 +29,13 @@ def fake_jwt_headers():
         "Authorization": f"Bearer XXXXXXXXXXXX"
     }
 
+
 @pytest.fixture
 def mock_get_jwt_headers(fake_jwt_headers, mocker):
     future = asyncio.Future()
     future.set_result(fake_jwt_headers)
     return future
+
 
 @pytest.fixture
 def mock_get_jwt_token(fake_tokens, mocker):
@@ -62,4 +65,3 @@ def fake_post_list(post_results, limit=10, offset=0, count=2, next=None, previou
         "previous": previous,
         "results": post_results
     }
-

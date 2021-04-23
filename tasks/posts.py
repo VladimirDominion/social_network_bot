@@ -71,12 +71,13 @@ async def _get_count_posts(*, user: User) -> int:
                 json_response = await resp.json()
                 return json_response.get('count')
 
+
 def _select_posts_for_likes(*, number_of_likes: int, count_posts: int) -> List[int]:
     assert (
             isinstance(number_of_likes, int) and isinstance(count_posts, int)
     ), 'number_of_likes and count_posts should be int'
     assert (
-        number_of_likes > 0 and count_posts > 0
+            number_of_likes > 0 and count_posts > 0
     ), f'number_of_likes and count_posts should be more then 0 for now {count_posts=} {number_of_likes=}'
     max_val = number_of_likes if number_of_likes <= count_posts else count_posts
     return random.sample(range(count_posts), k=max_val)
@@ -125,7 +126,6 @@ def _extract_post_urls(*, post_list: List[dict], post_numbers: List[int], posts_
     return url_list
 
 
-
 async def _get_post_urls(*, session: aiohttp.ClientSession, post_batches: List[BatchPosts]) -> List[str]:
     post_urls = []
     for post_batch in post_batches:
@@ -135,7 +135,6 @@ async def _get_post_urls(*, session: aiohttp.ClientSession, post_batches: List[B
                 posts = await resp.json()
                 post_urls += _extract_post_urls(post_list=posts['result'], post_numbers=post_batch.post_numbers)
     return post_urls
-
 
 
 async def _make_likes_for_user(*, session: aiohttp.ClientSession, post_batches: List[BatchPosts]):
@@ -158,7 +157,3 @@ async def make_likes(user_list: List[User]):
         jwt_headers = await get_jwt_headers(user=user)
         async with aiohttp.ClientSession(headers=jwt_headers) as session:
             await _make_likes_for_user(session=session, post_batches=post_batches)
-
-
-
-

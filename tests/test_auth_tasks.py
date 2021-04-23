@@ -1,8 +1,7 @@
 import pytest
 
 from .mocks import MockResponse
-
-from ..tasks.auth import get_jwt_token, get_jwt_headers, make_jwt_headers
+from ..tasks.auth import get_jwt_token, get_jwt_headers
 
 
 @pytest.mark.asyncio
