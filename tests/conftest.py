@@ -42,12 +42,24 @@ def mock_get_jwt_token(fake_tokens, mocker):
 
 
 @pytest.fixture
-def fake_post_list(limit=10, offset=0, count=2, next=None, previous=None, results=[]):
+def post_results():
+    return [
+        {'id': 1},
+        {'id': 2},
+        {'id': 3},
+        {'id': 4},
+        {'id': 5}
+    ]
+
+
+@pytest.fixture
+def fake_post_list(post_results, limit=10, offset=0, count=2, next=None, previous=None):
     return {
         "limit": limit,
         "offset": offset,
         "count": count,
         "next": next,
         "previous": previous,
-        "results": results
+        "results": post_results
     }
+
