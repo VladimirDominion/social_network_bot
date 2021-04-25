@@ -1,7 +1,8 @@
 import pytest
+from models import User
 
 from .mocks import MockResponse
-from ..tasks.users import _signup_user, _create_fake_user, _get_fake_user_list, User, create_users
+from ..tasks.users import _signup_user, _create_fake_user, _get_fake_user_list, create_users
 
 
 @pytest.mark.asyncio

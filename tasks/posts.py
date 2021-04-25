@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import random
 from typing import List
@@ -5,41 +6,34 @@ from typing import List
 import aiohttp
 from conf import BASE_URL, MAX_POST_PER_USER, MAX_LIKES_PER_USER, POSTS_ON_PAGE
 from faker import Faker
-from pydantic import BaseModel
+from models import User, Post, BatchPosts
 from tasks.auth import get_jwt_headers
-from tasks.users import User
 
 fake = Faker()
 logger = logging.getLogger(__name__)
 
 
-class Post(BaseModel):
-    id: int = None
-    title: str
-    text: str
-    author: int = None
-
-
 def _create_fake_post():
     return Post(
         title=fake.name(),
-        text=fake.text
+        text=fake.text()
     )
 
 
 def _get_fake_post_list(number_of_posts: int) -> List[User]:
     posts_list = []
     for _ in range(number_of_posts):
-        posts_list.append(_create_post())
+        posts_list.append(_create_fake_post())
     return posts_list
 
 
 async def _create_post(*, post: Post, url: str, session: aiohttp.ClientSession) -> Post:
-    with session.post(url, json=post.dict()) as resp:
+    async with session.post(url, json=post.dict()) as resp:
+        json_data = await resp.json()
         if resp.status == 201:
-            return await resp.json()
+            return json_data
         # TODO handle errors
-        logger.error(f"Error creating post {resp.status}")
+        logger.error(f"Error creating post {resp.status} {json_data}")
 
 
 def _calculate_random_count_actions(*, max_value: int) -> int:
@@ -48,13 +42,13 @@ def _calculate_random_count_actions(*, max_value: int) -> int:
 
 
 async def create_posts(*, user: User) -> List[Post]:
-    url = f'{BASE_URL}/api/posts/'
+    url = f'{BASE_URL}/api/posts/create/'
     count_posts = _calculate_random_count_actions(max_value=MAX_POST_PER_USER)
     jwt_headers = await get_jwt_headers(user=user)
     posts = []
     fake_posts = _get_fake_post_list(number_of_posts=count_posts)
     async with aiohttp.ClientSession(headers=jwt_headers) as session:
-        for task in asyncio.as_completed([_create_post(user=user, url=url) for user in fake_users_list]):
+        for task in asyncio.as_completed([_create_post(post=post, url=url, session=session) for post in fake_posts]):
             res = await task
             if res:
                 post = Post(id=res['id'], title=res['title'], text=res['text'], author=res['author'])
@@ -81,12 +75,6 @@ def _select_posts_for_likes(*, number_of_likes: int, count_posts: int) -> List[i
     ), f'number_of_likes and count_posts should be more then 0 for now {count_posts=} {number_of_likes=}'
     max_val = number_of_likes if number_of_likes <= count_posts else count_posts
     return random.sample(range(count_posts), k=max_val)
-
-
-class BatchPosts(BaseModel):
-    limit: int
-    offset: int
-    post_numbers: List[int]
 
 
 def _make_batches_of_posts(*, post_for_likes: List[int], count_posts: int, post_on_page: int) -> List[BatchPosts]:
@@ -119,6 +107,7 @@ def _extract_post_urls(*, post_list: List[dict], post_numbers: List[int], posts_
     url_list = []
     for post_number in post_numbers:
         n = (post_number % posts_on_page) - 1
+        logger.debug(f'{len(post_list)=} {n=}')
         if len(post_list) >= n:
             post = post_list[n]
             url = _get_post_like_url(post_id=post['id'])
@@ -133,23 +122,32 @@ async def _get_post_urls(*, session: aiohttp.ClientSession, post_batches: List[B
         async with session.get(url) as resp:
             if resp.status == 200:
                 posts = await resp.json()
-                post_urls += _extract_post_urls(post_list=posts['result'], post_numbers=post_batch.post_numbers)
+                post_urls += _extract_post_urls(
+                    post_list=posts['results'], post_numbers=post_batch.post_numbers, posts_on_page=POSTS_ON_PAGE
+                )
     return post_urls
 
 
 async def _make_likes_for_user(*, session: aiohttp.ClientSession, post_batches: List[BatchPosts]):
+    post_urls = await _get_post_urls(session=session, post_batches=post_batches)
     data = {
         'kind': True
     }
-    async with session.post(url, json=data) as resp:
-        pass
+    for url in post_urls:
+        async with session.post(url, json=data) as resp:
+
+            if resp.status == 201:
+                logger.debug(f"seccess like post {url}")
+            else:
+                res = await resp.json()
+                logger.error(f"error like {url}, {res}")
 
 
-async def make_likes(user_list: List[User]):
+async def create_likes(user_list: List[User]):
     assert len(user_list) > 0, 'Count users should be more than 0'
-    count_posts = _get_count_posts(user_list[0])
+    count_posts = await _get_count_posts(user=user_list[0])
     for user in user_list:
-        number_of_likes = _calculate_random_count_actions(MAX_LIKES_PER_USER)
+        number_of_likes = _calculate_random_count_actions(max_value=MAX_LIKES_PER_USER)
         posts_for_likes = _select_posts_for_likes(number_of_likes=number_of_likes, count_posts=count_posts)
         post_batches = _make_batches_of_posts(
             post_for_likes=posts_for_likes, count_posts=count_posts, post_on_page=POSTS_ON_PAGE

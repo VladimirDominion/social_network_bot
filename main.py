@@ -1,24 +1,18 @@
 import asyncio
-from typing import List
+import logging
 
-import aiohttp
-from dataclasses import dataclass
-from faker import Faker
-from pydantic import BaseModel
+from conf import MAX_POST_PER_USER, MAX_LIKES_PER_USER, NUMBER_OF_USERS
+from spiders.social_network_spider import SocialNetworkSpider
 
-from .conf import BASE_URL
-
-fake = Faker()
-
-users = []
-posts = []
-
-
+logging.basicConfig(level=logging.DEBUG)
 
 
 async def main():
     """ """
-    pass
+    spider = SocialNetworkSpider(
+        number_of_users=NUMBER_OF_USERS, max_post_per_user=MAX_POST_PER_USER, max_lakes_per_user=MAX_LIKES_PER_USER
+    )
+    await spider.run()
 
 
 if __name__ == '__main__':

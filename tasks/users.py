@@ -1,21 +1,14 @@
 import asyncio
+import logging
 from typing import List
 
 import aiohttp
 from conf import BASE_URL
 from faker import Faker
-from pydantic import BaseModel
+from models import User
 
 fake = Faker()
-
-
-class User(BaseModel):
-    id: int = None
-    email: str
-    password: str
-    first_name: str
-    last_name: str
-    is_registered: bool = False
+logger = logging.getLogger(__name__)
 
 
 def _create_fake_user() -> User:
@@ -36,17 +29,22 @@ def _get_fake_user_list(*, number_of_users: int) -> List[User]:
 
 
 async def _signup_user(*, user: User, url: str) -> User:
+    user_data = user.dict()
+    user_data['password_repeat'] = user_data['password']
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=user.dict()) as resp:
+        async with session.post(url, json=user_data) as resp:
             json_data = await resp.json()
             if resp.status == 201:
                 user.id = json_data['id']
                 return user
+            logging.error(f"Error signup user {resp.status} {json_data}")
 
 
 async def create_users(*, number_of_users: int) -> List[User]:
+    logger.debug("start creation users")
     fake_users_list = _get_fake_user_list(number_of_users=number_of_users)
     created_users_list = []
+    logger.debug(fake_users_list)
     url = f'{BASE_URL}/api/users/signup/'
     for task in asyncio.as_completed([_signup_user(user=user, url=url) for user in fake_users_list]):
         created_user = await task
