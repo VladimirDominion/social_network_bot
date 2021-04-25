@@ -26,10 +26,7 @@ class SocialNetworkSpider:
         for user in self.users:
             await create_posts(user=user)
 
-    async def make_likes(self):
-        await create_likes(user_list=self.users)
-
     async def run(self):
         await self.make_users()
         await self.make_posts()
-        await self.make_likes()
+        await create_likes(user_list=self.users)
