@@ -8,7 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 async def get_jwt_token(*, user: User) -> dict:
-    assert user, 'User is empty'
+    """
+    :param user:
+    :return: dict {'access': 'zzzz', 'refresh': 'xxxx'}
+    """
     url = f'{BASE_URL}/api/token/'
     data = {
         'email': user.email,
@@ -16,10 +19,10 @@ async def get_jwt_token(*, user: User) -> dict:
     }
     async with aiohttp.ClientSession() as session:
         async with session.post(url, json=data) as resp:
-            json_data = await resp.json()
+            response_data = await resp.json()
             if resp.status == 200:
-                return json_data
-            logger.error(f'{resp.status} {json_data}')
+                return response_data
+            logger.error(f'{resp.status} {response_data}')
 
 def make_jwt_headers(*, tokens: dict) -> dict:
     return {
@@ -29,5 +32,4 @@ def make_jwt_headers(*, tokens: dict) -> dict:
 
 async def get_jwt_headers(*, user: User) -> dict:
     tokens = await get_jwt_token(user=user)
-    logger.debug(tokens)
     return make_jwt_headers(tokens=tokens)

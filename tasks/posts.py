@@ -20,7 +20,7 @@ def _create_fake_post():
     )
 
 
-def _get_fake_post_list(number_of_posts: int) -> List[User]:
+def _get_fake_post_list(number_of_posts: int) -> List[Post]:
     posts_list = []
     for _ in range(number_of_posts):
         posts_list.append(_create_fake_post())
@@ -37,6 +37,7 @@ async def _create_post(*, post: Post, url: str, session: aiohttp.ClientSession) 
 
 
 def _calculate_random_count_actions(*, max_value: int) -> int:
+    """ We need calculate random value from 1 to max_value """
     assert max_value > 0, 'max_value should be more then 0'
     return random.randint(1, max_value) if max_value > 1 else max_value
 
@@ -67,6 +68,7 @@ async def _get_count_posts(*, user: User) -> int:
 
 
 def _select_posts_for_likes(*, number_of_likes: int, count_posts: int) -> List[int]:
+    """ Select numbers of posts for likes """
     assert (
             isinstance(number_of_likes, int) and isinstance(count_posts, int)
     ), 'number_of_likes and count_posts should be int'
